@@ -1,20 +1,21 @@
 
-// require restify
+
 var analyze = require('Sentimental').analyze;
-var restify = require('restify');
+var restify = require('restify');	
 var _ = require('underscore');  
 var request = require('superagent');  
 var server = restify.createServer();
 server.use(restify.queryParser());
 
-
-
-
-function getMessages(req, res, next) {
+function getUserMood(req, res, next) {
   var recent_tweets = [];
+  // This just allows any client to view this data
   res.header("Access-Control-Allow-Origin", "*"); 
-  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  // Amazon lets us set a cache expiry with the Expires header
+  res.header('Expires', new Date(new Date().getTime() + 120000).toUTCString());
   var user = req.params.user;
+  // Let's perform a slow/computational request
+  // Fetch a bunch of tweets and analyse their sentiments
   request
     .get('http://search.twitter.com/search.json')
     .send({ q: 'from:' + user })
@@ -29,11 +30,7 @@ function getMessages(req, res, next) {
     });
 }
 
-
-
-
-// Set up our routes and start the server
-server.get('/mood', getMessages);
+server.get('/mood/:user', getUserMood);
 
 server.listen(8080, function() {
   console.log('%s listening at %s, love & peace', server.name, server.url);
